@@ -1,7 +1,8 @@
 import uuid
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime
 
-from sqlalchemy import and_, select
+from sqlalchemy import cast, select
+from sqlalchemy import Date as SADate
 from sqlalchemy.orm import Session
 
 from app.models.entry import Entry
@@ -21,10 +22,8 @@ class EntryRepository:
     ) -> list[Entry]:
         stmt = select(Entry).where(Entry.user_id == user_id)
         if filter_date is not None:
-            day_start = datetime.combine(filter_date, time.min).replace(tzinfo=timezone.utc)
-            day_end = datetime.combine(filter_date, time.max).replace(tzinfo=timezone.utc)
             stmt = stmt.where(
-                and_(Entry.start_time >= day_start, Entry.start_time <= day_end)
+                cast(Entry.start_time, SADate) == filter_date
             )
         stmt = stmt.order_by(Entry.start_time)
         return list(self.db.execute(stmt).scalars().all())
