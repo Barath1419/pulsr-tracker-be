@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, entries, projects
+from app.api.routes import activities, auth, categories, entries, insights, projects
 
 app = FastAPI(
     title="Pulsr API",
@@ -20,6 +20,9 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(entries.router)
 app.include_router(projects.router)
+app.include_router(categories.router)
+app.include_router(activities.router)
+app.include_router(insights.router)
 
 
 @app.get("/health", tags=["health"])

@@ -11,6 +11,7 @@ class ProjectCreate(BaseModel):
     end_date: date | None = None
     notes: str | None = None
     progress_override: float | None = Field(default=None, ge=0.0, le=100.0)
+    category_id: uuid.UUID | None = None
 
 
 class ProjectUpdate(BaseModel):
@@ -19,6 +20,7 @@ class ProjectUpdate(BaseModel):
     end_date: date | None = None
     notes: str | None = None
     progress_override: float | None = Field(default=None, ge=0.0, le=100.0)
+    category_id: uuid.UUID | None = None
 
 
 class ProjectOut(BaseModel):

@@ -65,6 +65,7 @@ class ProjectService:
             end_date=payload.end_date,
             notes=payload.notes,
             progress_override=payload.progress_override,
+            category_id=payload.category_id,
         )
         return _to_out(project)
 

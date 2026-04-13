@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.entry import EntryCreate, EntryOut
+from app.schemas.entry import AssignProjectPayload, EntryCreate, EntryOut
 from app.services.entry_service import EntryService
 
 router = APIRouter(prefix="/entries", tags=["entries"])
@@ -24,6 +24,8 @@ def create_entry(
         title=payload.title,
         start_time=payload.start_time,
         end_time=payload.end_time,
+        project_id=payload.project_id,
+        category=payload.category,
     )
 
 
@@ -35,6 +37,20 @@ def list_entries(
 ) -> list[EntryOut]:
     return EntryService(db).list_entries(
         user_id=current_user.id, filter_date=filter_date
+    )
+
+
+@router.put("/{entry_id}/assign-project", response_model=EntryOut)
+def assign_project(
+    entry_id: uuid.UUID,
+    payload: AssignProjectPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> EntryOut:
+    return EntryService(db).assign_project(
+        entry_id=entry_id,
+        user_id=current_user.id,
+        project_id=payload.project_id,
     )
 
 

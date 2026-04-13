@@ -1,10 +1,15 @@
 import uuid
 from datetime import date, datetime, timezone
+from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Float, Index, String, Text
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.category import Category
+    from app.models.activity import Activity
 
 
 class Project(Base):
@@ -12,6 +17,9 @@ class Project(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(nullable=False, index=True)
+    category_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -30,3 +38,8 @@ class Project(Base):
     )
 
     __table_args__ = (Index("ix_projects_user_id", "user_id"),)
+
+    category: Mapped[Optional["Category"]] = relationship("Category", back_populates="projects")
+    activities: Mapped[list["Activity"]] = relationship(
+        "Activity", back_populates="project", cascade="all, delete-orphan"
+    )
