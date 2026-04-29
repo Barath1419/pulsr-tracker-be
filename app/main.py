@@ -11,7 +11,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tighten to specific frontend origin in production
+    allow_origins=[
+        "https://tracker.pulsr.in",
+        "https://www.tracker.pulsr.in",
+        "http://localhost:3000",
+        "http://192.168.29.177:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
