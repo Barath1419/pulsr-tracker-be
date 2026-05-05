@@ -20,9 +20,20 @@ class UserRepository:
             select(User).where(User.email == email)
         ).scalar_one_or_none()
 
-    def create(self, email: str, password_hash: str) -> User:
-        user = User(email=email, password_hash=password_hash)
+    def get_by_google_id(self, google_id: str) -> User | None:
+        return self.db.execute(
+            select(User).where(User.google_id == google_id)
+        ).scalar_one_or_none()
+
+    def create(self, email: str, password_hash: str | None = None, google_id: str | None = None) -> User:
+        user = User(email=email, password_hash=password_hash, google_id=google_id)
         self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def set_google_id(self, user: User, google_id: str) -> User:
+        user.google_id = google_id
         self.db.commit()
         self.db.refresh(user)
         return user
