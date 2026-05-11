@@ -37,3 +37,16 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update_profile(self, user: User, name: str | None, avatar_url: str | None) -> User:
+        if name is not None:
+            user.name = name
+        if avatar_url is not None:
+            user.avatar_url = avatar_url
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def delete(self, user: User) -> None:
+        self.db.delete(user)
+        self.db.commit()
