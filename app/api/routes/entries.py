@@ -25,6 +25,7 @@ def create_entry(
         start_time=payload.start_time,
         end_time=payload.end_time,
         project_id=payload.project_id,
+        activity_id=payload.activity_id,
         category=payload.category,
     )
 

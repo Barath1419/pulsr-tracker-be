@@ -19,6 +19,7 @@ class EntryService:
         start_time: datetime,
         end_time: datetime,
         project_id: uuid.UUID | None = None,
+        activity_id: uuid.UUID | None = None,
         category: str | None = None,
     ) -> Entry:
         return self.repo.create(
@@ -27,6 +28,7 @@ class EntryService:
             start_time=start_time,
             end_time=end_time,
             project_id=project_id,
+            activity_id=activity_id,
             category=category,
         )
 

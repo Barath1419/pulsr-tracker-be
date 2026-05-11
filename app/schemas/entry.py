@@ -10,6 +10,7 @@ class EntryCreate(BaseModel):
     start_time: datetime
     end_time: datetime
     project_id: Optional[uuid.UUID] = None
+    activity_id: Optional[uuid.UUID] = None
     category: Optional[str] = None
 
     @model_validator(mode="after")
@@ -27,6 +28,7 @@ class EntryOut(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     project_id: Optional[uuid.UUID] = None
+    activity_id: Optional[uuid.UUID] = None
     category: Optional[str] = None
     title: str
     start_time: datetime
