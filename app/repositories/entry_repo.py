@@ -32,6 +32,25 @@ class EntryRepository:
         stmt = stmt.order_by(Entry.start_time)
         return list(self.db.execute(stmt).scalars().all())
 
+    def list_since(self, user_id: uuid.UUID, since: date) -> list[Entry]:
+        stmt = (
+            select(Entry)
+            .options(selectinload(Entry.project))
+            .where(Entry.user_id == user_id)
+            .where(cast(Entry.start_time, SADate) >= since)
+            .order_by(Entry.start_time)
+        )
+        return list(self.db.execute(stmt).scalars().all())
+
+    def get_distinct_dates(self, user_id: uuid.UUID) -> list[date]:
+        stmt = (
+            select(cast(Entry.start_time, SADate).label("d"))
+            .where(Entry.user_id == user_id)
+            .distinct()
+            .order_by("d")
+        )
+        return [row.d for row in self.db.execute(stmt).all()]
+
     def create(
         self,
         user_id: uuid.UUID,

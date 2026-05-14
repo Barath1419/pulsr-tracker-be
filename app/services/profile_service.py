@@ -23,39 +23,38 @@ class ProfileService:
 
     def get_profile(self, user: User) -> dict:
         today = date.today()
+        since_30 = today - timedelta(days=29)
 
-        # --- Collect last 30 days of entries ---
-        all_30: list = []
-        daily_totals: list[int] = []
-        for i in range(30):
-            d = today - timedelta(days=i)
-            day_entries = self.entry_repo.list_for_user(user.id, d)
-            mins = sum(_minutes(e) for e in day_entries)
-            if mins > 0:
-                daily_totals.append(mins)
-            all_30.extend(day_entries)
+        # Single query for last 30 days (replaces 30 individual queries)
+        all_30 = self.entry_repo.list_since(user.id, since_30)
 
-        avg_daily = int(sum(daily_totals) / len(daily_totals)) if daily_totals else 0
+        # Daily totals
+        day_totals: dict[date, int] = {}
+        for e in all_30:
+            d = e.start_time.date()
+            day_totals[d] = day_totals.get(d, 0) + _minutes(e)
+        active_days = [m for m in day_totals.values() if m > 0]
+        avg_daily = int(sum(active_days) / len(active_days)) if active_days else 0
 
-        # --- Top category (last 30 days) ---
-        cat_map = {"work": 0, "personal_care": 0, "breaks": 0, "others": 0}
+        # Top category
+        cat_map: dict[str, int] = {}
         for e in all_30:
             cat = e.category or ("work" if e.project_id else "others")
             cat_map[cat] = cat_map.get(cat, 0) + _minutes(e)
-        top_cat_key = max(cat_map, key=lambda k: cat_map[k])
+        top_cat_key = max(cat_map, key=lambda k: cat_map[k]) if cat_map else "work"
         top_category_labels = {
             "work": "Work", "personal_care": "Personal", "breaks": "Breaks", "others": "Others"
         }
         top_category = top_category_labels.get(top_cat_key, "Work")
 
-        # --- Most used project (last 30 days) ---
+        # Most used project
         proj_count: dict[str, int] = {}
         for e in all_30:
             if e.project:
                 proj_count[e.project.name] = proj_count.get(e.project.name, 0) + 1
         most_used_project = max(proj_count, key=lambda k: proj_count[k]) if proj_count else "—"
 
-        # --- Peak hour (last 30 days) ---
+        # Peak hour
         hour_map: dict[int, int] = {}
         for e in all_30:
             h = e.start_time.hour
@@ -75,36 +74,33 @@ class ProfileService:
             else "Start logging your day to discover your peak productivity hours."
         )
 
-        # --- Days logged in last 7 ---
+        # Days logged in last 7 (derived from day_totals, no extra query)
         days_logged = sum(
             1 for i in range(7)
-            if any(
-                (today - timedelta(days=i)).isoformat() in e.start_time.date().isoformat()
-                for e in all_30
-            )
+            if (today - timedelta(days=i)) in day_totals
         )
         consistency_insight = (
             f"You log consistently {days_logged} day{'s' if days_logged != 1 else ''} a week. "
             + ("Your flow state is stabilizing." if days_logged >= 4 else "Keep building the habit!")
         )
 
-        # --- Current streak (consecutive days back from today) ---
+        # Single query for all distinct entry dates (replaces up to 365 queries)
+        all_dates = self.entry_repo.get_distinct_dates(user.id)
+        date_set = set(all_dates)
+
+        # Current streak
         current_streak = 0
-        for i in range(365):
-            d = today - timedelta(days=i)
-            day_entries = self.entry_repo.list_for_user(user.id, d)
-            if day_entries:
+        for i in range(len(all_dates) + 1):
+            if (today - timedelta(days=i)) in date_set:
                 current_streak += 1
             else:
                 break
 
-        # --- Best streak (all time) ---
-        all_entries = self.entry_repo.list_for_user(user.id)
-        entry_dates = sorted({e.start_time.date() for e in all_entries})
+        # Best streak
         best_streak = 0
         run = 0
         prev: date | None = None
-        for d in entry_dates:
+        for d in all_dates:
             if prev is None or (d - prev).days == 1:
                 run += 1
             else:
